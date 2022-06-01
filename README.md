@@ -6,6 +6,8 @@ Simple ELT example using Pub/Sub, DataFlow, BigQuery and GeoViz. The example use
 
 ![](imgs/0.png)
 
+
+## Project structure
 ```
 .
 ├── bigquery.tf (datasets and tables)
