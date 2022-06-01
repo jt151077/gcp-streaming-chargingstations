@@ -4,6 +4,26 @@ Simple ELT example using Pub/Sub, DataFlow, BigQuery and GeoViz. The example use
 
 ## Overall architecture
 
+![](imgs/0.png)
+
+```
+.
+├── bigquery.tf (datasets and tables)
+├── config.tf (services and provider)
+├── iam.tf (service accounts and roles)
+├── imgs
+│   ├── 0.png
+│   ├── 1.png
+│   └── 2.png
+├── network.tf (vpc and subnet)
+├── README.md (this file)
+├── stations.csv (sample data)
+├── storage.tf (blob storage for sample file)
+├── streaming.tf (pub/sub and dataflow)
+├── terraform.tfvars.json (environment variables - not commited)
+├── update_stations.py (station status generator)
+└── vars.tf (variables configuration)
+```
 
 ## Setup
 
