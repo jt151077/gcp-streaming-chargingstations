@@ -39,7 +39,7 @@ resource "google_project_service" "gcp_services" {
 }
 
 terraform {
-  required_version = "= 1.1.9"
+  required_version = "= 1.2.2"
 
   required_providers {
     archive = {
