@@ -29,19 +29,17 @@ Simple ELT example using Pub/Sub, DataFlow, BigQuery and GeoViz. The example use
 
 ## Setup
 
-1. Create a file `terraform.tfvars.json` with the following format. Set the correct values for your project
-```json
-{
-    "project_id": "YOUR-PROJECT-ID",
-    "project_nmr": YOUR-PROJECT-NUMBER,
-    "topic_id": "YOUR-TOPIC-ID"
-}
+1. Find out your GCP project's id and number from the dashboard in the cloud console, and run the following commands in a terminal at the root of source code (replace `your_project_number` and `your_project_id` by the correct values):
+```shell
+sed -i 's/PROJECT_NMR/your_project_number/g' *.*
+sed -i 's/PROJECT_ID/your_project_id/g' *.*
 ```
 
 ## Install
 
 1. Run the following command at the root of the folder:
 ```shell 
+$ ./install.sh
 $ terraform init
 $ terraform plan
 $ terraform apply
