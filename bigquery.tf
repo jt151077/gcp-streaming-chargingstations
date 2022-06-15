@@ -141,7 +141,10 @@ WITH
   FROM
     `.data_prod.ChargingStations` )
 SELECT
-  *
+  *,
+  ST_GEOGPOINT(lng,
+    lat) AS lnglat,
+  CONCAT(lat, ", ", lng) AS cslatlng
 FROM
   `.data_prod.StationsAvailability` s1
 JOIN
@@ -149,7 +152,7 @@ JOIN
 ON
   station_id = id
 WHERE
-  charger_total is not null
+  charger_total IS NOT NULL
   AND updated = (
   SELECT
     MAX(updated)
