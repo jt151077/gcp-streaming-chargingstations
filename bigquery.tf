@@ -139,14 +139,14 @@ WITH
   SELECT
     *
   FROM
-    `.data_prod.ChargingStations` )
+    `PROJECT_ID.data_prod.ChargingStations` )
 SELECT
   *,
   ST_GEOGPOINT(lng,
     lat) AS lnglat,
   CONCAT(lat, ", ", lng) AS cslatlng
 FROM
-  `.data_prod.StationsAvailability` s1
+  `PROJECT_ID.data_prod.StationsAvailability` s1
 JOIN
   stations
 ON
@@ -157,7 +157,7 @@ WHERE
   SELECT
     MAX(updated)
   FROM
-    `.data_prod.StationsAvailability` s2
+    `PROJECT_ID.data_prod.StationsAvailability` s2
   WHERE
     s1.station_id = s2.station_id)
 ORDER BY
