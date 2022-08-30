@@ -39,7 +39,7 @@ sed -i 's/PROJECT_ID/your_project_id/g' *.*
 
 1. Run the following command at the root of the folder:
 ```shell 
-$ ./install.sh
+$ sudo ./install.sh
 $ terraform init
 $ terraform plan
 $ terraform apply
