@@ -14,3 +14,10 @@ variable "project_default_region" {
 variable "topic_id" {
   type = string
 }
+
+variable "grafana_version" {
+  default = "latest"
+}
+
+variable "domain" {
+}

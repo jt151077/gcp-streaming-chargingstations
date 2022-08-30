@@ -26,7 +26,18 @@ locals {
     "iamcredentials.googleapis.com",
     "pubsub.googleapis.com",
     "dataflow.googleapis.com",
-    "storage.googleapis.com"
+    "storage.googleapis.com",
+    "compute.googleapis.com", 
+    "run.googleapis.com", 
+    "apigateway.googleapis.com", 
+    "servicemanagement.googleapis.com", 
+    "servicecontrol.googleapis.com", 
+    "iap.googleapis.com", 
+    "sql-component.googleapis.com", 
+    "cloudapis.googleapis.com", 
+    "sqladmin.googleapis.com",
+    "secretmanager.googleapis.com", 
+    "cloudresourcemanager.googleapis.com"
   ]
 }
 
@@ -49,12 +60,12 @@ terraform {
 
     google = {
       source  = "hashicorp/google"
-      version = "= 4.14.0"
+      version = ">= 3.53"
     }
 
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = "= 4.14.0"
+      version = ">= 3.53"
     }
   }
 }
