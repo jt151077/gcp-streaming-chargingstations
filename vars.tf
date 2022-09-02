@@ -20,4 +20,9 @@ variable "grafana_version" {
 }
 
 variable "domain" {
+  type = string
+}
+
+variable "iap_brand_support_email" {
+  type = string
 }

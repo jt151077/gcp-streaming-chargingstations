@@ -16,6 +16,9 @@
 
 
 resource "google_storage_bucket" "source_csv" {
+  depends_on = [
+    google_project_service.gcp_services
+  ]
   project       = local.project_id
   name          = "${local.project_id}_source_csv"
   storage_class = "REGIONAL"
@@ -23,6 +26,9 @@ resource "google_storage_bucket" "source_csv" {
 }
 
 resource "google_storage_bucket_object" "charging_stations" {
+  depends_on = [
+    google_storage_bucket.source_csv
+  ]
   name   = "stations.csv"
   source = "stations.csv"
   bucket = google_storage_bucket.source_csv.name

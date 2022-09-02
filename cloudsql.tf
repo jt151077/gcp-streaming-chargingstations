@@ -21,31 +21,38 @@ resource "random_password" "db_password" {
 }
 
 resource "google_secret_manager_secret" "secret" {
+  depends_on = [
+    google_project_service.gcp_services
+  ]
   project   = local.project_id
   secret_id = "grafana-db-password"
   replication {
     automatic = true
   }
-
-  depends_on = [
-    google_project_service.gcp_services
-  ]
 }
 
 resource "google_secret_manager_secret_version" "secret-version-data" {
+  depends_on = [
+    google_secret_manager_secret.secret
+  ]
   secret      = google_secret_manager_secret.secret.name
   secret_data = random_password.db_password.result
 }
 
 resource "google_secret_manager_secret_iam_member" "secret-access" {
-  project    = local.project_id
-  secret_id  = google_secret_manager_secret.secret.id
-  role       = "roles/secretmanager.secretAccessor"
-  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
-  depends_on = [google_secret_manager_secret.secret]
+  depends_on = [
+    google_secret_manager_secret.secret
+  ]
+  project   = local.project_id
+  secret_id = google_secret_manager_secret.secret.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
 
 resource "google_sql_database_instance" "instance" {
+  depends_on = [
+    google_project_service.gcp_services
+  ]
   name             = "grafana-mysql"
   database_version = "MYSQL_8_0"
   region           = local.project_default_region
@@ -58,19 +65,19 @@ resource "google_sql_database_instance" "instance" {
   deletion_protection = "false"
 }
 
-resource "google_project_iam_member" "grafana_sql_client_role_assignment" {
-  project = local.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.grafana_sa.email}"
-}
-
 resource "google_sql_database" "database" {
+  depends_on = [
+    google_sql_database_instance.instance
+  ]
   name     = "grafana"
   project  = local.project_id
   instance = google_sql_database_instance.instance.name
 }
 
 resource "google_sql_user" "user" {
+  depends_on = [
+    google_sql_database_instance.instance
+  ]
   name     = "grafana"
   project  = local.project_id
   instance = google_sql_database_instance.instance.name

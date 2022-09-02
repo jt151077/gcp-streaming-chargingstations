@@ -15,42 +15,8 @@
  */
 
 
-locals {
-  project_id             = var.project_id
-  project_number         = var.project_nmr
-  project_default_region = var.project_default_region
-  gcp_service_list = [
-    "bigquery.googleapis.com",
-    "bigquerystorage.googleapis.com",
-    "iam.googleapis.com",
-    "iamcredentials.googleapis.com",
-    "pubsub.googleapis.com",
-    "dataflow.googleapis.com",
-    "storage.googleapis.com",
-    "compute.googleapis.com", 
-    "run.googleapis.com", 
-    "apigateway.googleapis.com", 
-    "servicemanagement.googleapis.com", 
-    "servicecontrol.googleapis.com", 
-    "iap.googleapis.com", 
-    "sql-component.googleapis.com", 
-    "cloudapis.googleapis.com", 
-    "sqladmin.googleapis.com",
-    "secretmanager.googleapis.com", 
-    "cloudresourcemanager.googleapis.com"
-  ]
-}
-
-
-resource "google_project_service" "gcp_services" {
-  count              = length(local.gcp_service_list)
-  project            = local.project_id
-  service            = local.gcp_service_list[count.index]
-  disable_on_destroy = false
-}
-
 terraform {
-  required_version = ">= 1.2.2"
+  required_version = ">= 1.2.7"
 
   required_providers {
     archive = {
@@ -68,4 +34,39 @@ terraform {
       version = ">= 3.53"
     }
   }
+}
+
+locals {
+  project_id              = var.project_id
+  project_number          = var.project_nmr
+  project_default_region  = var.project_default_region
+  iap_brand_support_email = var.iap_brand_support_email
+  gcp_service_list = [
+    "bigquery.googleapis.com",
+    "bigquerystorage.googleapis.com",
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "pubsub.googleapis.com",
+    "dataflow.googleapis.com",
+    "storage.googleapis.com",
+    "compute.googleapis.com",
+    "run.googleapis.com",
+    "apigateway.googleapis.com",
+    "servicemanagement.googleapis.com",
+    "servicecontrol.googleapis.com",
+    "iap.googleapis.com",
+    "sql-component.googleapis.com",
+    "cloudapis.googleapis.com",
+    "sqladmin.googleapis.com",
+    "secretmanager.googleapis.com",
+    "cloudresourcemanager.googleapis.com"
+  ]
+}
+
+
+resource "google_project_service" "gcp_services" {
+  count              = length(local.gcp_service_list)
+  project            = local.project_id
+  service            = local.gcp_service_list[count.index]
+  disable_on_destroy = false
 }

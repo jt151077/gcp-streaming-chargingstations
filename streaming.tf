@@ -16,6 +16,9 @@
 
 
 resource "google_storage_bucket" "dataflow-tmp-bucket" {
+  depends_on = [
+    google_project_service.gcp_services
+  ]
   project       = local.project_id
   name          = "${local.project_id}-dataflow-tmp-bucket"
   storage_class = "REGIONAL"
@@ -28,7 +31,6 @@ resource "google_dataflow_job" "dataflow-job" {
     google_storage_bucket.dataflow-tmp-bucket,
     google_pubsub_topic.ingestion-topic,
     google_project_iam_member.roles,
-    google_compute_network.custom_vpc,
     google_compute_subnetwork.custom-subnet
   ]
 

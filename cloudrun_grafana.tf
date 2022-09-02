@@ -1,28 +1,58 @@
-resource "google_service_account" "grafana_sa" {
-  account_id   = "grafana"
-  display_name = "Service Account for Grafana"
-  project      = local.project_id
+/**
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+locals {
+  static_envs = {
+    GF_LOG_LEVEL                  = "DEBUG"
+    GF_SERVER_ROOT_URL            = "https://${var.domain}"
+    GF_SERVER_HTTP_PORT           = "8080"
+    GF_DATABASE_TYPE              = "mysql"
+    GF_DATABASE_HOST              = "/cloudsql/${google_sql_database_instance.instance.connection_name}"
+    GF_DATABASE_USER              = google_sql_user.user.name
+    GF_DATABASE_NAME              = google_sql_database.database.name
+    GF_AUTH_JWT_ENABLED           = "true"
+    GF_AUTH_JWT_HEADER_NAME       = "X-Goog-Iap-Jwt-Assertion"
+    GF_AUTH_JWT_USERNAME_CLAIM    = "email"
+    GF_AUTH_JWT_EMAIL_CLAIM       = "email"
+    GF_AUTH_JWT_JWK_SET_URL       = "https://www.gstatic.com/iap/verify/public_key-jwk"
+    GF_AUTH_JWT_EXPECTED_CLAIMS   = "{\"iss\": \"https://cloud.google.com/iap\"}"
+    GF_AUTH_PROXY_ENABLED         = "true"
+    GF_AUTH_PROXY_HEADER_NAME     = "X-Goog-Authenticated-User-Email"
+    GF_AUTH_PROXY_HEADER_PROPERTY = "email"
+    GF_AUTH_PROXY_AUTO_SIGN_UP    = "true"
+    GF_USERS_AUTO_ASSIGN_ORG_ROLE = "Viewer"
+    GF_USERS_VIEWERS_CAN_EDIT     = "true"
+    GF_USERS_EDITORS_CAN_ADMIN    = "false"
+    GF_INSTALL_PLUGINS            = "grafana-bigquery-datasource"
+  }
 }
 
-resource "google_project_iam_member" "grafana_monitoring_viewer_role_assignment" {
-  project = local.project_id
-  role    = "roles/monitoring.viewer"
-  member  = "serviceAccount:${google_service_account.grafana_sa.email}"
-}
 
-resource "google_project_iam_member" "grafana_bq_viewer_role_assignment" {
-  project = local.project_id
-  role    = "roles/bigquery.dataViewer"
-  member  = "serviceAccount:${google_service_account.grafana_sa.email}"
-}
+resource "google_cloud_run_service" "grafana" {
+  depends_on = [
+    google_project_service.gcp_services,
+    google_service_account.grafana_sa,
+    google_secret_manager_secret_iam_member.datasource-access,
+    google_secret_manager_secret_iam_member.secret-access,
+    google_secret_manager_secret_iam_member.dashboard-yaml-access,
+    google_secret_manager_secret_iam_member.dashboard-json-access,
+    google_sql_database_instance.instance,
+    google_sql_user.user,
+  ]
 
-resource "google_project_iam_member" "grafana_bq_job_user_role_assignment" {
-  project = local.project_id
-  role    = "roles/bigquery.jobUser"
-  member  = "serviceAccount:${google_service_account.grafana_sa.email}"
-}
-
-resource "google_cloud_run_service" "default" {
   provider = google-beta
   name     = "grafana"
   location = local.project_default_region
@@ -136,54 +166,18 @@ resource "google_cloud_run_service" "default" {
     percent         = 100
     latest_revision = true
   }
-
-  depends_on = [
-    google_project_service.gcp_services,
-    google_sql_database.database,
-    google_sql_user.user,
-    google_secret_manager_secret_iam_member.datasource-access,
-    google_secret_manager_secret_iam_member.secret-access,
-    google_secret_manager_secret_iam_member.dashboard-yaml-access,
-    google_secret_manager_secret_iam_member.dashboard-json-access,
-  ]
-}
-
-locals {
-  static_envs = {
-    GF_LOG_LEVEL                  = "DEBUG"
-    GF_SERVER_ROOT_URL            = "https://${var.domain}"
-    GF_SERVER_HTTP_PORT           = "8080"
-    GF_DATABASE_TYPE              = "mysql"
-    GF_DATABASE_HOST              = "/cloudsql/${google_sql_database_instance.instance.connection_name}"
-    GF_DATABASE_USER              = google_sql_user.user.name
-    GF_DATABASE_NAME              = google_sql_database.database.name
-    GF_AUTH_JWT_ENABLED           = "true"
-    GF_AUTH_JWT_HEADER_NAME       = "X-Goog-Iap-Jwt-Assertion"
-    GF_AUTH_JWT_USERNAME_CLAIM    = "email"
-    GF_AUTH_JWT_EMAIL_CLAIM       = "email"
-    GF_AUTH_JWT_JWK_SET_URL       = "https://www.gstatic.com/iap/verify/public_key-jwk"
-    GF_AUTH_JWT_EXPECTED_CLAIMS   = "{\"iss\": \"https://cloud.google.com/iap\"}"
-    GF_AUTH_PROXY_ENABLED         = "true"
-    GF_AUTH_PROXY_HEADER_NAME     = "X-Goog-Authenticated-User-Email"
-    GF_AUTH_PROXY_HEADER_PROPERTY = "email"
-    GF_AUTH_PROXY_AUTO_SIGN_UP    = "true"
-    GF_USERS_AUTO_ASSIGN_ORG_ROLE = "Viewer"
-    GF_USERS_VIEWERS_CAN_EDIT     = "true"
-    GF_USERS_EDITORS_CAN_ADMIN    = "false"
-    GF_INSTALL_PLUGINS            = "grafana-bigquery-datasource"
-  }
 }
 
 resource "google_secret_manager_secret" "datasource" {
+  depends_on = [
+    google_project_service.gcp_services
+  ]
+
   project   = local.project_id
   secret_id = "datasource-yml"
   replication {
     automatic = true
   }
-
-  depends_on = [
-    google_project_service.gcp_services
-  ]
 }
 
 resource "google_secret_manager_secret_version" "datasource-version-data" {
@@ -192,14 +186,15 @@ resource "google_secret_manager_secret_version" "datasource-version-data" {
 }
 
 resource "google_secret_manager_secret_iam_member" "datasource-access" {
-  project    = local.project_id
-  secret_id  = google_secret_manager_secret.datasource.id
-  role       = "roles/secretmanager.secretAccessor"
-  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
   depends_on = [
-    google_secret_manager_secret.datasource, 
+    google_secret_manager_secret.datasource,
     google_secret_manager_secret_version.datasource-version-data
   ]
+
+  project   = local.project_id
+  secret_id = google_secret_manager_secret.datasource.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
 
 resource "google_secret_manager_secret_version" "datasource-version-data-1" {
@@ -208,27 +203,27 @@ resource "google_secret_manager_secret_version" "datasource-version-data-1" {
 }
 
 resource "google_secret_manager_secret_iam_member" "datasource-access-1" {
-  project    = local.project_id
-  secret_id  = google_secret_manager_secret.datasource.id
-  role       = "roles/secretmanager.secretAccessor"
-  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
   depends_on = [
-    google_secret_manager_secret.datasource, 
+    google_secret_manager_secret.datasource,
     google_secret_manager_secret_version.datasource-version-data-1
   ]
+
+  project   = local.project_id
+  secret_id = google_secret_manager_secret.datasource.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
 
-
 resource "google_secret_manager_secret" "dashboard-yaml" {
+  depends_on = [
+    google_project_service.gcp_services
+  ]
+
   project   = local.project_id
   secret_id = "dashboard-yaml"
   replication {
     automatic = true
   }
-
-  depends_on = [
-    google_project_service.gcp_services
-  ]
 }
 
 resource "google_secret_manager_secret_version" "dashboard-yaml-version-data" {
@@ -237,27 +232,28 @@ resource "google_secret_manager_secret_version" "dashboard-yaml-version-data" {
 }
 
 resource "google_secret_manager_secret_iam_member" "dashboard-yaml-access" {
-  project    = local.project_id
-  secret_id  = google_secret_manager_secret.dashboard-yaml.id
-  role       = "roles/secretmanager.secretAccessor"
-  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
   depends_on = [
-    google_secret_manager_secret.dashboard-yaml, 
+    google_secret_manager_secret.dashboard-yaml,
     google_secret_manager_secret_version.dashboard-yaml-version-data
   ]
+
+  project   = local.project_id
+  secret_id = google_secret_manager_secret.dashboard-yaml.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
 
 
 resource "google_secret_manager_secret" "dashboard-json" {
+  depends_on = [
+    google_project_service.gcp_services
+  ]
+
   project   = local.project_id
   secret_id = "dashboard-json"
   replication {
     automatic = true
   }
-
-  depends_on = [
-    google_project_service.gcp_services
-  ]
 }
 
 resource "google_secret_manager_secret_version" "dashboard-json-version-data" {
@@ -266,14 +262,15 @@ resource "google_secret_manager_secret_version" "dashboard-json-version-data" {
 }
 
 resource "google_secret_manager_secret_iam_member" "dashboard-json-access" {
-  project    = local.project_id
-  secret_id  = google_secret_manager_secret.dashboard-json.id
-  role       = "roles/secretmanager.secretAccessor"
-  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
   depends_on = [
     google_secret_manager_secret.dashboard-json,
     google_secret_manager_secret_version.dashboard-json-version-data
   ]
+
+  project   = local.project_id
+  secret_id = google_secret_manager_secret.dashboard-json.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
 
 resource "google_secret_manager_secret_version" "dashboard-json-version-data-1" {
@@ -282,31 +279,13 @@ resource "google_secret_manager_secret_version" "dashboard-json-version-data-1" 
 }
 
 resource "google_secret_manager_secret_iam_member" "dashboard-json-access-1" {
-  project    = local.project_id
-  secret_id  = google_secret_manager_secret.dashboard-json.id
-  role       = "roles/secretmanager.secretAccessor"
-  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
   depends_on = [
     google_secret_manager_secret.dashboard-json,
     google_secret_manager_secret_version.dashboard-json-version-data-1
   ]
-}
 
-resource "google_service_account" "grafana_bq" {
-  account_id   = "grafana-bq"
-  display_name = "Service Account for Grafana BigQuery"
-  project      = local.project_id
+  project   = local.project_id
+  secret_id = google_secret_manager_secret.dashboard-json.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
-
-/*
-resource "google_project_iam_member" "grafana_bq_viewer_role_assignment" {
-  project = local.project_id
-  role    = "roles/bigquery.dataViewer"
-  member  = "serviceAccount:${google_service_account.grafana_bq.email}"
-}
-
-resource "google_project_iam_member" "grafana_bq_job_user_role_assignment" {
-  project = local.project_id
-  role    = "roles/bigquery.jobUser"
-  member  = "serviceAccount:${google_service_account.grafana_bq.email}"
-}*/
