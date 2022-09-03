@@ -82,6 +82,18 @@ SELECT *, ST_GEOGPOINT(lng, lat) as loc FROM `.data_prod.ChargersAvailability`
 ![](imgs/2.png)
 
 
+6. Update your domain DNS entry with an "A" entry pointing to your LoadBalancer's IP address (printed at the end of the `terraform apply` output log)
+
+![](imgs/4.png)
+
+
+7. Monitor the traffic to the Load Balancer, as well as the updates to BigQuery via 2 dashboards in Grafana
+
+https://<YOUR.DOMAIN>/
+
+![](imgs/5.png)
+
+![](imgs/6.png)
 
 ## Uninstall
 
