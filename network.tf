@@ -62,6 +62,18 @@ resource "google_iap_client" "project_client" {
   brand        = google_iap_brand.project_brand.name
 }
 
+resource "google_iap_web_backend_service_iam_binding" "binding" {
+  depends_on = [
+    google_project_service.gcp_services,
+    module.lb-http
+  ]
+  project             = local.project_id
+  web_backend_service = "tf-cr-lb-backend-default"
+  role                = "roles/iap.httpsResourceAccessor"
+  members = [
+    "user:${local.iap_brand_support_email}",
+  ]
+}
 
 resource "google_compute_region_network_endpoint_group" "cloud_run_neg" {
   depends_on = [
@@ -74,7 +86,7 @@ resource "google_compute_region_network_endpoint_group" "cloud_run_neg" {
   region                = local.project_default_region
   project               = local.project_id
   cloud_run {
-    service = google_cloud_run_service.default.name
+    service = google_cloud_run_service.grafana.name
   }
 }
 

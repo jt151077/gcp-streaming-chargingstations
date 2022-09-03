@@ -63,6 +63,7 @@ INSERT INTO `.data_prod.ChargingStations` SELECT id, name, street, town as city,
 4. Generate fictive charging station status using the python generator, by running the following in a terminal at the root of your project:
 
 ```shell
+$ pip3 install google-cloud-pubsub
 $ python3 update_stations.py
 
 ```

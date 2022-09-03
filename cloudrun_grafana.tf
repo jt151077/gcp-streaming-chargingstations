@@ -101,15 +101,9 @@ resource "google_cloud_run_service" "grafana" {
           name       = "dashboard-json-volume"
           mount_path = "/var/lib/grafana/dashboards/gcp"
         }
-      }
-      volumes {
-        name = "datasource-volume-1"
-        secret {
-          secret_name = google_secret_manager_secret.datasource.secret_id
-          items {
-            key  = "latest"
-            path = "cloud-monitoring.yaml"
-          }
+        volume_mounts {
+          name       = "dashboard-json-volume-1"
+          mount_path = "/var/lib/grafana/dashboards/gcp1"
         }
       }
       volumes {
@@ -118,7 +112,7 @@ resource "google_cloud_run_service" "grafana" {
           secret_name = google_secret_manager_secret.datasource.secret_id
           items {
             key  = "latest"
-            path = "grafana-bigquery.yaml"
+            path = "cloud-monitoring.yaml"
           }
         }
       }
@@ -145,7 +139,7 @@ resource "google_cloud_run_service" "grafana" {
       volumes {
         name = "dashboard-json-volume-1"
         secret {
-          secret_name = google_secret_manager_secret.dashboard-json.secret_id
+          secret_name = google_secret_manager_secret.dashboard-json-1.secret_id
           items {
             key  = "latest"
             path = "gcst.json"
@@ -169,15 +163,15 @@ resource "google_cloud_run_service" "grafana" {
 }
 
 resource "google_secret_manager_secret" "datasource" {
-  depends_on = [
-    google_project_service.gcp_services
-  ]
-
   project   = local.project_id
   secret_id = "datasource-yml"
   replication {
     automatic = true
   }
+
+  depends_on = [
+    google_project_service.gcp_services
+  ]
 }
 
 resource "google_secret_manager_secret_version" "datasource-version-data" {
@@ -186,44 +180,27 @@ resource "google_secret_manager_secret_version" "datasource-version-data" {
 }
 
 resource "google_secret_manager_secret_iam_member" "datasource-access" {
+  project    = local.project_id
+  secret_id  = google_secret_manager_secret.datasource.id
+  role       = "roles/secretmanager.secretAccessor"
+  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
   depends_on = [
-    google_secret_manager_secret.datasource,
+    google_secret_manager_secret.datasource, 
     google_secret_manager_secret_version.datasource-version-data
   ]
-
-  project   = local.project_id
-  secret_id = google_secret_manager_secret.datasource.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
 
-resource "google_secret_manager_secret_version" "datasource-version-data-1" {
-  secret      = google_secret_manager_secret.datasource.name
-  secret_data = file("${path.module}/provisioning/datasources/grafana-bigquery.yaml")
-}
-
-resource "google_secret_manager_secret_iam_member" "datasource-access-1" {
-  depends_on = [
-    google_secret_manager_secret.datasource,
-    google_secret_manager_secret_version.datasource-version-data-1
-  ]
-
-  project   = local.project_id
-  secret_id = google_secret_manager_secret.datasource.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
-}
 
 resource "google_secret_manager_secret" "dashboard-yaml" {
-  depends_on = [
-    google_project_service.gcp_services
-  ]
-
   project   = local.project_id
   secret_id = "dashboard-yaml"
   replication {
     automatic = true
   }
+
+  depends_on = [
+    google_project_service.gcp_services
+  ]
 }
 
 resource "google_secret_manager_secret_version" "dashboard-yaml-version-data" {
@@ -232,28 +209,27 @@ resource "google_secret_manager_secret_version" "dashboard-yaml-version-data" {
 }
 
 resource "google_secret_manager_secret_iam_member" "dashboard-yaml-access" {
+  project    = local.project_id
+  secret_id  = google_secret_manager_secret.dashboard-yaml.id
+  role       = "roles/secretmanager.secretAccessor"
+  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
   depends_on = [
-    google_secret_manager_secret.dashboard-yaml,
+    google_secret_manager_secret.dashboard-yaml, 
     google_secret_manager_secret_version.dashboard-yaml-version-data
   ]
-
-  project   = local.project_id
-  secret_id = google_secret_manager_secret.dashboard-yaml.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
 
 
 resource "google_secret_manager_secret" "dashboard-json" {
-  depends_on = [
-    google_project_service.gcp_services
-  ]
-
   project   = local.project_id
   secret_id = "dashboard-json"
   replication {
     automatic = true
   }
+
+  depends_on = [
+    google_project_service.gcp_services
+  ]
 }
 
 resource "google_secret_manager_secret_version" "dashboard-json-version-data" {
@@ -262,30 +238,40 @@ resource "google_secret_manager_secret_version" "dashboard-json-version-data" {
 }
 
 resource "google_secret_manager_secret_iam_member" "dashboard-json-access" {
+  project    = local.project_id
+  secret_id  = google_secret_manager_secret.dashboard-json.id
+  role       = "roles/secretmanager.secretAccessor"
+  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
   depends_on = [
     google_secret_manager_secret.dashboard-json,
     google_secret_manager_secret_version.dashboard-json-version-data
   ]
+}
 
+resource "google_secret_manager_secret" "dashboard-json-1" {
   project   = local.project_id
-  secret_id = google_secret_manager_secret.dashboard-json.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
+  secret_id = "dashboard-json-1"
+  replication {
+    automatic = true
+  }
+
+  depends_on = [
+    google_project_service.gcp_services
+  ]
 }
 
 resource "google_secret_manager_secret_version" "dashboard-json-version-data-1" {
-  secret      = google_secret_manager_secret.dashboard-json.name
+  secret      = google_secret_manager_secret.dashboard-json-1.name
   secret_data = file("${path.module}/provisioning/dashboards/gcst.json")
 }
 
 resource "google_secret_manager_secret_iam_member" "dashboard-json-access-1" {
+  project    = local.project_id
+  secret_id  = google_secret_manager_secret.dashboard-json-1.id
+  role       = "roles/secretmanager.secretAccessor"
+  member     = "serviceAccount:${google_service_account.grafana_sa.email}"
   depends_on = [
     google_secret_manager_secret.dashboard-json,
     google_secret_manager_secret_version.dashboard-json-version-data-1
   ]
-
-  project   = local.project_id
-  secret_id = google_secret_manager_secret.dashboard-json.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
