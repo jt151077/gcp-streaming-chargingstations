@@ -98,7 +98,7 @@ resource "google_bigquery_table" "stations-availability-raw" {
   ]
   project             = local.project_id
   dataset_id          = google_bigquery_dataset.data_prod.dataset_id
-  table_id            = "RawStationsAvailability"
+  table_id            = "StationsAvailabilityStream"
   deletion_protection = false
 
   schema = <<EOF
@@ -108,46 +108,6 @@ resource "google_bigquery_table" "stations-availability-raw" {
     "type": "STRING",
     "mode": "NULLABLE",
     "description": "The data"
-  }
-]
-EOF
-}
-
-
-resource "google_bigquery_table" "stations-availability" {
-  depends_on = [
-    google_bigquery_dataset.data_prod
-  ]
-  project             = local.project_id
-  dataset_id          = google_bigquery_dataset.data_prod.dataset_id
-  table_id            = "StationsAvailability"
-  deletion_protection = false
-
-  schema = <<EOF
-[
-  {
-    "description": "",
-    "type": "INTEGER",
-    "name": "station_id",
-    "mode": "NULLABLE"
-  },
-  {
-    "description": "",
-    "type": "INTEGER",
-    "name": "charger_in_use",
-    "mode": "NULLABLE"
-  },
-  {
-    "description": "",
-    "type": "INTEGER",
-    "name": "charger_total",
-    "mode": "NULLABLE"
-  },
-  {
-    "description": "",
-    "type": "DATETIME",
-    "name": "updated",
-    "mode": "NULLABLE"
   }
 ]
 EOF
@@ -173,29 +133,36 @@ WITH
   SELECT
     *
   FROM
-    `PROJECT_ID.data_prod.ChargingStations` )
+    `proj-20220905-demo-project.data_prod.ChargingStations` ),
+  status AS (
+  SELECT
+    SAFE.PARSE_JSON(DATA) AS json_data
+  FROM
+    `proj-20220905-demo-project.data_prod.RawStationsAvailability`)
 SELECT
-  *,
-  ST_GEOGPOINT(lng,
-    lat) AS lnglat,
+  * EXCEPT (json_data),
+  JSON_VALUE(json_data.charger_total) as charger_total,
+  JSON_VALUE(json_data.charger_in_use) as charger_in_use,
+  JSON_VALUE(json_data.updated) as updated,
+  ST_GEOGPOINT(lng, lat) AS lnglat,
   CONCAT(lat, ", ", lng) AS cslatlng
 FROM
-  `PROJECT_ID.data_prod.StationsAvailability` s1
+  status s1
 JOIN
   stations
 ON
-  station_id = id
+  CAST(JSON_VALUE(json_data.station_id) AS INT64) = id
 WHERE
-  charger_total IS NOT NULL
-  AND updated = (
+  json_data.charger_total IS NOT NULL
+  AND JSON_VALUE(json_data.updated) = (
   SELECT
-    MAX(updated)
+    MAX(JSON_VALUE(json_data.updated))
   FROM
-    `PROJECT_ID.data_prod.StationsAvailability` s2
+    status s2
   WHERE
-    s1.station_id = s2.station_id)
+    JSON_VALUE(s1.json_data.station_id) = JSON_VALUE(s2.json_data.station_id))
 ORDER BY
-  station_id ASC
+  JSON_VALUE(json_data.station_id) ASC
 EOF
     use_legacy_sql = false
   }
