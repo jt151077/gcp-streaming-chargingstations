@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-data "google_compute_zones" "available" {
-  project = local.project_id
-  region  = local.project_default_region
-}
 
 resource "google_compute_network" "custom_vpc" {
+    depends_on = [
+    google_project_service.gcp_services
+  ]
   name                    = "custom-vpc"
   project                 = local.project_id
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "custom-subnet" {
+    depends_on = [
+    google_compute_network.custom_vpc
+  ]
   name          = "subnet-${local.project_default_region}"
   project       = local.project_id
   ip_cidr_range = "10.0.1.0/29"

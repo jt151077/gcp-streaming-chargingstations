@@ -15,6 +15,9 @@
  */
 
 resource "google_bigquery_dataset" "data_prod" {
+    depends_on = [
+    google_project_service.gcp_services
+  ]
   project       = local.project_id
   dataset_id    = "data_prod"
   friendly_name = "data_prod"
@@ -22,6 +25,9 @@ resource "google_bigquery_dataset" "data_prod" {
 }
 
 resource "google_bigquery_dataset" "data_raw" {
+    depends_on = [
+    google_project_service.gcp_services
+  ]
   project       = local.project_id
   dataset_id    = "data_raw"
   friendly_name = "data_raw"
@@ -29,6 +35,9 @@ resource "google_bigquery_dataset" "data_raw" {
 }
 
 resource "google_bigquery_table" "charging-stations" {
+    depends_on = [
+    google_bigquery_dataset.data_prod
+  ]
   project             = local.project_id
   dataset_id          = google_bigquery_dataset.data_prod.dataset_id
   table_id            = "ChargingStations"
@@ -84,6 +93,9 @@ EOF
 
 
 resource "google_bigquery_table" "stations-availability" {
+    depends_on = [
+    google_bigquery_dataset.data_prod
+  ]
   project             = local.project_id
   dataset_id          = google_bigquery_dataset.data_prod.dataset_id
   table_id            = "StationsAvailability"

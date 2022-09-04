@@ -15,10 +15,32 @@
  */
 
 
+terraform {
+  required_version = ">= 1.2.7"
+
+  required_providers {
+    archive = {
+      source  = "hashicorp/archive"
+      version = "= 2.0.0"
+    }
+
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 3.53"
+    }
+
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = ">= 3.53"
+    }
+  }
+}
+
 locals {
-  project_id             = var.project_id
-  project_number         = var.project_nmr
-  project_default_region = var.project_default_region
+  project_id              = var.project_id
+  project_number          = var.project_nmr
+  project_default_region  = var.project_default_region
+  iap_brand_support_email = var.iap_brand_support_email
   gcp_service_list = [
     "bigquery.googleapis.com",
     "bigquerystorage.googleapis.com",
@@ -36,25 +58,4 @@ resource "google_project_service" "gcp_services" {
   project            = local.project_id
   service            = local.gcp_service_list[count.index]
   disable_on_destroy = false
-}
-
-terraform {
-  required_version = ">= 1.2.2"
-
-  required_providers {
-    archive = {
-      source  = "hashicorp/archive"
-      version = "= 2.0.0"
-    }
-
-    google = {
-      source  = "hashicorp/google"
-      version = "= 4.14.0"
-    }
-
-    google-beta = {
-      source  = "hashicorp/google-beta"
-      version = "= 4.14.0"
-    }
-  }
 }
