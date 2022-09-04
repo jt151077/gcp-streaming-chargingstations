@@ -25,7 +25,7 @@ resource "google_pubsub_topic" "ingestion-topic" {
 
 resource "google_pubsub_subscription" "topic-to-bq" {
     depends_on = [
-        google_pubsub_topic.ingestion-topic
+        google_pubsub_topic.ingestion-topic,
         google_project_iam_member.pub-sub-role
         ]
   name  = "${local.project_id}-streaming-to-bq"
