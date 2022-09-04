@@ -138,7 +138,7 @@ WITH
   SELECT
     SAFE.PARSE_JSON(DATA) AS json_data
   FROM
-    `proj-20220905-demo-project.data_prod.RawStationsAvailability`)
+    `proj-20220905-demo-project.data_prod.StationsAvailabilityStream`)
 SELECT
   * EXCEPT (json_data),
   JSON_VALUE(json_data.charger_total) as charger_total,
