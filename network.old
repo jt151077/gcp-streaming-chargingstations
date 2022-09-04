@@ -16,7 +16,7 @@
 
 
 resource "google_compute_network" "custom_vpc" {
-    depends_on = [
+  depends_on = [
     google_project_service.gcp_services
   ]
   name                    = "custom-vpc"
@@ -25,7 +25,7 @@ resource "google_compute_network" "custom_vpc" {
 }
 
 resource "google_compute_subnetwork" "custom-subnet" {
-    depends_on = [
+  depends_on = [
     google_compute_network.custom_vpc
   ]
   name          = "subnet-${local.project_default_region}"

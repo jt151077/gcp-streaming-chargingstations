@@ -15,7 +15,7 @@
  */
 
 resource "google_bigquery_dataset" "data_prod" {
-    depends_on = [
+  depends_on = [
     google_project_service.gcp_services
   ]
   project       = local.project_id
@@ -25,7 +25,7 @@ resource "google_bigquery_dataset" "data_prod" {
 }
 
 resource "google_bigquery_dataset" "data_raw" {
-    depends_on = [
+  depends_on = [
     google_project_service.gcp_services
   ]
   project       = local.project_id
@@ -35,7 +35,7 @@ resource "google_bigquery_dataset" "data_raw" {
 }
 
 resource "google_bigquery_table" "charging-stations" {
-    depends_on = [
+  depends_on = [
     google_bigquery_dataset.data_prod
   ]
   project             = local.project_id
@@ -93,7 +93,7 @@ EOF
 
 
 resource "google_bigquery_table" "stations-availability" {
-    depends_on = [
+  depends_on = [
     google_bigquery_dataset.data_prod
   ]
   project             = local.project_id

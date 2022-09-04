@@ -15,44 +15,21 @@
  */
 
 
-resource "google_storage_bucket" "dataflow-tmp-bucket" {
-    depends_on = [
-    google_project_service.gcp_services
-  ]
-  project       = local.project_id
-  name          = "${local.project_id}-dataflow-tmp-bucket"
-  storage_class = "REGIONAL"
-  location      = local.project_default_region
-  force_destroy = true
-}
-
-resource "google_dataflow_job" "dataflow-job" {
-  depends_on = [
-    google_storage_bucket.dataflow-tmp-bucket,
-    google_pubsub_topic.ingestion-topic,
-    google_project_iam_member.roles,
-    google_compute_subnetwork.custom-subnet
-  ]
-
-  project           = local.project_id
-  region            = local.project_default_region
-  name              = "${local.project_id}-${google_pubsub_topic.ingestion-topic.name}"
-  network           = google_compute_network.custom_vpc.id
-  subnetwork        = "regions/${local.project_default_region}/subnetworks/${google_compute_subnetwork.custom-subnet.name}"
-  on_delete         = "cancel"
-  template_gcs_path = "gs://dataflow-templates-europe-west1/latest/PubSub_to_BigQuery"
-  temp_gcs_location = "${google_storage_bucket.dataflow-tmp-bucket.url}/messages"
-  parameters = {
-    inputTopic      = google_pubsub_topic.ingestion-topic.id
-    outputTableSpec = "${local.project_id}:${google_bigquery_dataset.data_prod.dataset_id}.${google_bigquery_table.stations-availability.table_id}"
-  }
-  service_account_email = google_service_account.streaming-sa.email
-}
-
 resource "google_pubsub_topic" "ingestion-topic" {
   depends_on = [
     google_compute_network.custom_vpc
   ]
   project = local.project_id
   name    = var.topic_id
+}
+
+resource "google_pubsub_subscription" "topic-to-bq" {
+  name  = "${local.project_id}-streaming-to-bq"
+  topic = google_pubsub_topic.ingestion-topic.name
+
+  bigquery_config {
+    table = "${local.project_id}:${google_bigquery_dataset.data_prod.dataset_id}.${google_bigquery_table.stations-availability.table_id}"
+  }
+
+  depends_on = [google_project_iam_member.viewer, google_project_iam_member.editor]
 }

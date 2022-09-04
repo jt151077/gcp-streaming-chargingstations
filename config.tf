@@ -26,12 +26,12 @@ terraform {
 
     google = {
       source  = "hashicorp/google"
-      version = ">= 3.53"
+      version = ">= 4.34"
     }
 
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = ">= 3.53"
+      version = ">= 4.34"
     }
   }
 }
@@ -47,7 +47,6 @@ locals {
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",
     "pubsub.googleapis.com",
-    "dataflow.googleapis.com",
     "storage.googleapis.com"
   ]
 }
