@@ -35,6 +35,6 @@ resource "google_pubsub_subscription" "topic-to-bq" {
   topic   = google_pubsub_topic.ingestion-topic.name
 
   bigquery_config {
-    table = "${local.project_id}:${google_bigquery_dataset.data_prod.dataset_id}.${google_bigquery_table.stations-availability.table_id}"
+    table = "${local.project_id}:${google_bigquery_dataset.data_prod.dataset_id}.${google_bigquery_table.stations-availability-raw.table_id}"
   }
 }

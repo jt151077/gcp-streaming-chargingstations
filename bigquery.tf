@@ -92,6 +92,28 @@ EOF
 }
 
 
+resource "google_bigquery_table" "stations-availability-raw" {
+  depends_on = [
+    google_bigquery_dataset.data_prod
+  ]
+  project             = local.project_id
+  dataset_id          = google_bigquery_dataset.data_prod.dataset_id
+  table_id            = "RawStationsAvailability"
+  deletion_protection = false
+
+  schema = <<EOF
+[
+  {
+    "name": "data",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "The data"
+  }
+]
+EOF
+}
+
+
 resource "google_bigquery_table" "stations-availability" {
   depends_on = [
     google_bigquery_dataset.data_prod
