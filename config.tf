@@ -40,7 +40,6 @@ locals {
   project_id              = var.project_id
   project_number          = var.project_nmr
   project_default_region  = var.project_default_region
-  iap_brand_support_email = var.iap_brand_support_email
   gcp_service_list = [
     "bigquery.googleapis.com",
     "bigquerystorage.googleapis.com",

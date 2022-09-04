@@ -17,19 +17,21 @@
 
 resource "google_pubsub_topic" "ingestion-topic" {
   depends_on = [
-    google_compute_network.custom_vpc
+    google_project_service.gcp_services
   ]
   project = local.project_id
   name    = var.topic_id
 }
 
 resource "google_pubsub_subscription" "topic-to-bq" {
+    depends_on = [
+        google_pubsub_topic.ingestion-topic
+        google_project_iam_member.pub-sub-role
+        ]
   name  = "${local.project_id}-streaming-to-bq"
   topic = google_pubsub_topic.ingestion-topic.name
 
   bigquery_config {
     table = "${local.project_id}:${google_bigquery_dataset.data_prod.dataset_id}.${google_bigquery_table.stations-availability.table_id}"
   }
-
-  depends_on = [google_project_iam_member.viewer, google_project_iam_member.editor]
 }
