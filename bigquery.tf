@@ -92,7 +92,7 @@ EOF
 }
 
 
-resource "google_bigquery_table" "stations-availability-raw" {
+resource "google_bigquery_table" "stations-availability" {
   depends_on = [
     google_bigquery_dataset.data_prod
   ]
