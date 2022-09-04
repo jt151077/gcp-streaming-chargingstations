@@ -112,7 +112,7 @@ resource "google_cloud_run_service" "grafana" {
           secret_name = google_secret_manager_secret.datasource.secret_id
           items {
             key  = "latest"
-            path = "cloud-monitoring.yaml"
+            path = "gcp.yaml"
           }
         }
       }
@@ -176,7 +176,7 @@ resource "google_secret_manager_secret" "datasource" {
 
 resource "google_secret_manager_secret_version" "datasource-version-data" {
   secret      = google_secret_manager_secret.datasource.name
-  secret_data = file("${path.module}/provisioning/datasources/cloud-monitoring.yaml")
+  secret_data = file("${path.module}/provisioning/datasources/gcp.yaml")
 }
 
 resource "google_secret_manager_secret_iam_member" "datasource-access" {
